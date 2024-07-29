@@ -285,6 +285,18 @@ files = [
 ]
 
 [[package]]
+name = "lsl-gateway-lib"
+version = "24.7.0"
+description = "Gateway from Python to LSL in Second Life - library"
+optional = false
+python-versions = "*"
+files = []
+
+[package.source]
+type = "file"
+url = "../py-lsl-gateway-lib/dist/lsl_gateway_lib-24.7.0-py3-none-any.whl"
+
+[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -682,4 +694,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "08e583e8ede19f5b45849ede8d811a908ca8cef1a0afdcdb0dc16948002056e3"
+content-hash = "f6af2a06bc74d6d619ce7983287c18186966b3b8406d43c126aeff6d3170775a"

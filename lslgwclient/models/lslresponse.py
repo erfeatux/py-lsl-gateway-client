@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 import re
 
-from lsl_gw_lib.models import Avatar
-from lsl_gw_lib.models import Region
+from lslgwlib.models import Avatar
+from lslgwlib.models import Region
 
 # choose different http request mechanism for unit tests
 import os

@@ -11,7 +11,7 @@ class Values(BaseModel):
 
 
 def test_get_prims(setup_env):
-	from lsl_gw_client import LinkSet
+	from lslgwclient import LinkSet
 
 	ls = LinkSet('https://simhost-0123456789abcdef0.agni.secondlife.io:12043'
 			+ '/cap/00000000-0000-0000-0000-000000000000')

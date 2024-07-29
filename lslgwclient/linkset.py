@@ -11,7 +11,7 @@ else:
 	from .http import get
 
 from .models import LSLResponse
-from lsl_gw_lib.models import LinkSetInfo, PrimInfo, Avatar
+from lslgwlib.models import LinkSetInfo, PrimInfo, Avatar
 
 
 # provides API for server.lsl inworld

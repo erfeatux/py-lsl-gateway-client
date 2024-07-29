@@ -13,6 +13,7 @@ packages = [
 python = "^3.10"
 aiohttp = "^3.9.5"
 pydantic = "^2.8.2"
+lsl-gateway-lib = "24.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
