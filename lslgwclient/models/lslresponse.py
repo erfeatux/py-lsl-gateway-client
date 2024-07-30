@@ -1,9 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uuid import UUID
 import re
 
-from lslgwlib.models import Avatar
-from lslgwlib.models import Region
+from lslgwlib.models import HTTPData, Avatar, Region
 
 # choose different http request mechanism for unit tests
 import os
@@ -14,22 +13,7 @@ else:
 
 
 # LinkSet API responses model
-class LSLResponse(BaseModel):
-	# info from X-SecondLife-* headers:
-	objectKey: UUID
-	objectName: str = Field(pattern=r'[\x20-\x7b\x7d-\x7e]{0, 63}')
-	owner: Avatar
-	position: tuple[float, float, float]
-	rotation: tuple[float, float, float, float]
-	velocity: tuple[float, float, float]
-	region: Region 
-	production: bool
-
-	# response (different by API methods)
-	data: BaseModel | list[BaseModel]
-	# other http headers
-	headers: dict[str, str]
-
+class LSLResponse(HTTPData):
 	def __init__(self, *args, **kwargs) -> None:
 		# constructor by http response and parsed data
 		if len(args) == 2 and isinstance(args[0], ClientResponse)\
