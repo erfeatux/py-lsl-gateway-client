@@ -1,3 +1,3 @@
 from .lslresponse import LSLResponse
 
-__all__ = ['LSLResponse']
+__all__ = ["LSLResponse"]
