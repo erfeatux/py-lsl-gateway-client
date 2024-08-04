@@ -1,9 +1,12 @@
+import os
 import pytest
 import asyncio
 from uuid import UUID
 
 
+@pytest.mark.unitstest
 def test_lslresponse(setup_env):
+    assert os.getenv("UNIT_TESTS")
     from lslgwclient import LinkSet
 
     ls = LinkSet(

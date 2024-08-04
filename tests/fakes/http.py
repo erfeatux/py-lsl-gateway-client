@@ -38,7 +38,6 @@ class ClientResponse:
 
 # http get method
 async def get(url: str) -> ClientResponse:
-    print(url)
     match url.lower():
         # fake data for info method
         case url if url.endswith("/info"):
@@ -85,7 +84,6 @@ async def get(url: str) -> ClientResponse:
 
 # http get method
 async def post(url: str, data: str | None) -> ClientResponse:
-    print(url, data)
     match url.lower():
         # fake data for call of linksetDataGet method with protection pass
         case url if url.endswith("/linksetdata/read/testpkey"):

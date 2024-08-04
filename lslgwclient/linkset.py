@@ -91,7 +91,7 @@ class LinkSet:
                 prims.append(primInfo(line.split("¦")))
 
         # load next parts while exists
-        while body[-1] == "+":
+        while body and body[-1] == "+":
             resp = await get(f"{self.__url}/prims/{len(prims)+1}")
             body = (await resp.text()).splitlines()
             for line in body:

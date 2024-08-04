@@ -1,3 +1,4 @@
+import os
 import pytest
 import asyncio
 from uuid import UUID
@@ -10,7 +11,9 @@ class Values(BaseModel):
     date: datetime
 
 
+@pytest.mark.unitstest
 def test_get_info(setup_env):
+    assert os.getenv("UNIT_TESTS")
     from lslgwclient import LinkSet
 
     ls = LinkSet(
@@ -35,3 +38,18 @@ def test_get_info(setup_env):
     assert resp.data.createdAt == tvs.date
     assert resp.data.rezzedAt == tvs.date
     assert resp.data.scriptName == "script.lsl"
+
+
+@pytest.mark.integrationtest
+def test_integration_get_info(integration_test_url):
+    from lslgwclient import LinkSet
+
+    ls = LinkSet(integration_test_url)
+    resp = asyncio.run(ls.info())
+    assert resp.data.owner.id.int  # not NULL_KEY
+    assert resp.data.owner.modernName()
+    assert resp.data.creatorId.int  # not NULL_KEY
+
+    # production shard name is Agni
+    assert ("agni" in integration_test_url) == resp.production
+    assert resp.headers["Server"].startswith("Second Life LSL/Second Life Server")
