@@ -194,3 +194,13 @@ async def get(url: str) -> aiohttp.ClientResponse:
             if resp.status not in range(200, 203):
                 raise __exceptionByResp(resp)
             return resp
+
+
+# http post method
+async def post(url: str, data: str | None) -> aiohttp.ClientResponse:
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, data=data, ssl=__sslcontext) as resp:
+            await resp.text()
+            if resp.status not in range(200, 203):
+                raise __exceptionByResp(resp)
+            return resp

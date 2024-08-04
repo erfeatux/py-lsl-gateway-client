@@ -20,7 +20,7 @@ class LSLResponse(HTTPData):
         if (
             len(args) == 2
             and isinstance(args[0], ClientResponse)
-            and isinstance(args[1], BaseModel | list | int | float | str | UUID)
+            and isinstance(args[1], BaseModel | list | int | float | str | UUID | None)
         ):
             headers: dict[str, str] = dict()
             for headName in args[0].headers:

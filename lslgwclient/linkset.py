@@ -7,11 +7,12 @@ import re
 import os
 
 if os.getenv("UNIT_TESTS"):
-    from tests.fakes.http import get
+    from tests.fakes.http import get, post
 else:
-    from .http import get
+    from .http import get, post
 
 from .models import LSLResponse
+from .exceptions import linksetDataExceptionByNum
 from lslgwlib.models import LinkSetInfo, PrimInfo, Avatar
 
 
@@ -98,3 +99,67 @@ class LinkSet:
                     prims.append(primInfo(line.split("¦")))
 
         return LSLResponse(resp, prims)
+
+    # get all linkset data keys
+    async def linksetDataKeys(self) -> LSLResponse:
+        keys: list[str] = list()
+        resp = await get(f"{self.__url}/linksetdata/keys")
+        text = await resp.text()
+        if not text:
+            return LSLResponse(resp, keys)
+        body = text.split("¦")
+        if body[-1] == "+":
+            keys.extend(body[:-1])
+        else:
+            keys.extend(body)
+        while body[-1] == "+":
+            resp = await get(f"{self.__url}/linksetdata/keys/{len(keys)+1}")
+            body = (await resp.text()).split("¦")
+            if body[-1] == "+":
+                keys.extend(body[:-1])
+            else:
+                keys.extend(body)
+        return LSLResponse(resp, keys)
+
+    # get linkset data value by key
+    @validate_call
+    async def linksetDataGet(
+        self, key: Annotated[str, Field(min_length=1)], pwd: str | None = None
+    ) -> LSLResponse:
+        if pwd:
+            resp = await post(f"{self.__url}/linksetdata/read/{key}", pwd)
+        else:
+            resp = await get(f"{self.__url}/linksetdata/read/{key}")
+        if not await resp.text():
+            raise linksetDataExceptionByNum(4, key)
+        return LSLResponse(resp, await resp.text())
+
+    # set linkset data value
+    @validate_call
+    async def linksetDataWrite(
+        self,
+        key: Annotated[str, Field(min_length=1)],
+        value: Annotated[str, Field(min_length=1)],
+        pwd: str | None = None,
+    ) -> LSLResponse:
+        if pwd:
+            resp = await post(f"{self.__url}/linksetdata/write/{key}", f"{value}¦{pwd}")
+        else:
+            resp = await post(f"{self.__url}/linksetdata/write/{key}", value)
+        num = int(await resp.text())
+        if num:
+            raise linksetDataExceptionByNum(num, key)
+        return LSLResponse(resp, None)
+
+    # delete linkset data value by key
+    @validate_call
+    async def linksetDataDelete(
+        self,
+        key: Annotated[str, Field(min_length=1)],
+        pwd: str | None = None,
+    ) -> LSLResponse:
+        resp = await post(f"{self.__url}/linksetdata/delete/{key}", pwd)
+        num = int(await resp.text())
+        if num:
+            raise linksetDataExceptionByNum(num, key)
+        return LSLResponse(resp, None)
