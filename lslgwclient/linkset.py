@@ -74,18 +74,20 @@ class LinkSet:
                 ids.append(tmpId)
                 return tmpId
 
-            pId = primId(info[0], info[3])
+            pId = primId(info[0], info[3] + info[4])
             return PrimInfo(
                 id=pId,
                 creatorId=info[0],
                 createdAt=info[3],
                 name=info[1],
                 description=info[2],
+                faces=info[4],
             )
 
         # load first part from server.lsl
         resp = await get(f"{self.__url}/prims")
         body = (await resp.text()).splitlines()
+        print("body", f'"{await resp.text()}"')
         for line in body:
             if line != "+":
                 prims.append(primInfo(line.split("¦")))

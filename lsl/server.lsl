@@ -58,12 +58,14 @@ processRequest(key request_id, string method, string path, list data)
 	else if (method == "GET" && llGetSubString(path, 0, 5) == "/prims" && llGetListLength(data) == 0)
 	{//return list of all prims
 		integer i = 1;
+		integer n = llGetNumberOfPrims();
 		// if have num argument, start processing from this prim
 		if (isInteger(llGetSubString(path, 7, -1)))
 			i = (integer)llGetSubString(path, 7, -1);
+		if (!llGetLinkNumber()) {i=0;n=0;}
 		integer len = 0;
 		string resp = "";
-		for (;i<=llGetNumberOfPrims();i++)
+		for (;i<=n;i++)
 		{
 			list pd = llGetObjectDetails(llGetLinkKey(i),
 				[
@@ -72,6 +74,7 @@ processRequest(key request_id, string method, string path, list data)
 					OBJECT_DESC,
 					OBJECT_CREATION_TIME
 				]);
+			pd += [llGetLinkNumberOfSides(i)];
 			string line = llDumpList2String(pd, "¦");
 			integer lineLen = llStringLength(line) + 3;
 			if (len + lineLen + 2 > lineLimit())
