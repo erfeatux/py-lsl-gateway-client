@@ -8,12 +8,16 @@ import aiohttp
 import os.path
 import ssl
 
+from logging import getLogger
+
+log = getLogger(__name__)
 
 # prepare LindenLab.crt
 __llcacrt = "LindenLab.crt"
 __sslcontext = None
 if not __sslcontext:
     if not os.path.isfile("LindenLab.crt"):
+        log.debug("Donwload LindenLab.crt")
         urllib.request.urlretrieve(
             "https://raw.githubusercontent.com/secondlife/llca/master/LindenLab.crt",
             __llcacrt,
@@ -22,7 +26,7 @@ if not __sslcontext:
     __sslcontext.set_ciphers("ALL:@SECLEVEL=1")
 
 
-# select exception type by responce.staus
+# select exception type by responce.status
 @validate_call
 def __exceptionByResp(
     resp=Annotated[aiohttp.ClientResponse, Field()],
@@ -188,19 +192,25 @@ def __exceptionByResp(
 
 # http get method
 async def get(url: str) -> aiohttp.ClientResponse:
+    log.debug(f"{url=}")
     async with aiohttp.ClientSession() as session:
         async with session.get(url, ssl=__sslcontext) as resp:
-            await resp.text()
+            log.debug(f"{resp}{await resp.text()}")
             if resp.status not in range(200, 203):
-                raise __exceptionByResp(resp)
+                e = __exceptionByResp(resp)
+                log.error(e)
+                raise e
             return resp
 
 
 # http post method
 async def post(url: str, data: str | None) -> aiohttp.ClientResponse:
+    log.debug(f"{url=}; {data=}")
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=data, ssl=__sslcontext) as resp:
             await resp.text()
             if resp.status not in range(200, 203):
-                raise __exceptionByResp(resp)
+                e = __exceptionByResp(resp)
+                log.error(e)
+                raise e
             return resp
