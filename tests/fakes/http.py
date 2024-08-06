@@ -36,84 +36,86 @@ class ClientResponse:
         return self.__text
 
 
-# http get method
-async def get(url: str) -> ClientResponse:
-    match url.lower():
-        # fake data for info method
-        case url if url.endswith("/info"):
-            return ClientResponse(
-                "00000000-0000-0000-0000-000000000000¦"
-                + "00000000-0000-0000-0000-000000000000¦00000000-0000-0000-0000-000000000000¦"
-                + "test description¦0¦255¦1¦2023-11-28T20:47:54.389906Z¦"
-                + "2023-11-28T20:47:54.389906Z¦script.lsl"
-            )
+class HTTP:
+    # http get method
+    @staticmethod
+    async def get(url: str) -> ClientResponse:
+        match url.lower():
+            # fake data for info method
+            case url if url.endswith("/info"):
+                return ClientResponse(
+                    "00000000-0000-0000-0000-000000000000¦"
+                    + "00000000-0000-0000-0000-000000000000¦00000000-0000-0000-0000-000000000000¦"
+                    + "test description¦0¦255¦1¦2023-11-28T20:47:54.389906Z¦"
+                    + "2023-11-28T20:47:54.389906Z¦script.lsl"
+                )
 
-        # fake data for first call of prims method
-        case url if url.endswith("/prims"):
-            return ClientResponse(
-                f"{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
-                + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-10-28T20:47:54.389906Z¦4"
-                + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
-                + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
-                + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
-                + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:57:54.389906Z¦4\n+"
-            )
-        # fake data for second call of prims method
-        case url if url.endswith("/prims/7"):
-            return ClientResponse(
-                f"{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
-                + f"\n{creatorId}¦Test last prim¦test prim desc¦2023-11-28T20:57:54.389906Z¦4"
-            )
+            # fake data for first call of prims method
+            case url if url.endswith("/prims"):
+                return ClientResponse(
+                    f"{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
+                    + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-10-28T20:47:54.389906Z¦4"
+                    + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
+                    + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
+                    + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
+                    + f"\n{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:57:54.389906Z¦4\n+"
+                )
+            # fake data for second call of prims method
+            case url if url.endswith("/prims/7"):
+                return ClientResponse(
+                    f"{creatorId}¦Test prim name¦test prim desc¦2023-11-28T20:47:54.389906Z¦4"
+                    + f"\n{creatorId}¦Test last prim¦test prim desc¦2023-11-28T20:57:54.389906Z¦4"
+                )
 
-        # fake data for first call of linksetDataKeys method
-        case url if url.endswith("/linksetdata/keys"):
-            return ClientResponse("key0¦key1¦key2¦key3¦key4¦+")
-        # fake data for second call of linksetDataKeys method
-        case url if url.endswith("/linksetdata/keys/6"):
-            return ClientResponse("key5¦key6¦key7¦key8¦key9")
+            # fake data for first call of linksetDataKeys method
+            case url if url.endswith("/linksetdata/keys"):
+                return ClientResponse("key0¦key1¦key2¦key3¦key4¦+")
+            # fake data for second call of linksetDataKeys method
+            case url if url.endswith("/linksetdata/keys/6"):
+                return ClientResponse("key5¦key6¦key7¦key8¦key9")
 
-        # fake data for call of linksetDataGet method
-        case url if url.endswith("/linksetdata/read/testkey"):
-            return ClientResponse("testval")
-        # fake data for call of linksetDataGet method with not exist key
-        case url if url.endswith("/linksetdata/read/notexistkey"):
-            return ClientResponse("")
+            # fake data for call of linksetDataGet method
+            case url if url.endswith("/linksetdata/read/testkey"):
+                return ClientResponse("testval")
+            # fake data for call of linksetDataGet method with not exist key
+            case url if url.endswith("/linksetdata/read/notexistkey"):
+                return ClientResponse("")
 
-    return ClientResponse("")
+        return ClientResponse("")
 
+    # http get method
+    @staticmethod
+    async def post(url: str, data: str | None) -> ClientResponse:
+        match url.lower():
+            # fake data for call of linksetDataGet method with protection pass
+            case url if url.endswith("/linksetdata/read/testpkey"):
+                if data == "pass":
+                    return ClientResponse("testpval")
 
-# http get method
-async def post(url: str, data: str | None) -> ClientResponse:
-    match url.lower():
-        # fake data for call of linksetDataGet method with protection pass
-        case url if url.endswith("/linksetdata/read/testpkey"):
-            if data == "pass":
-                return ClientResponse("testpval")
+            # fake data for call of linksetDataWrite method
+            case url if url.endswith("/linksetdata/write/testkey"):
+                if data == "testval":
+                    return ClientResponse("0")
+            # fake data for call of linksetDataWrite method with already exist key:value
+            case url if url.endswith("/linksetdata/write/alreadyexist"):
+                if data == "testval":
+                    return ClientResponse("5")
+            # fake data for call of linksetDataWrite method with protection pass
+            case url if url.endswith("/linksetdata/write/testpkey"):
+                if data == "testpval¦pass":
+                    return ClientResponse("0")
 
-        # fake data for call of linksetDataWrite method
-        case url if url.endswith("/linksetdata/write/testkey"):
-            if data == "testval":
-                return ClientResponse("0")
-        # fake data for call of linksetDataWrite method with already exist key:value
-        case url if url.endswith("/linksetdata/write/alreadyexist"):
-            if data == "testval":
-                return ClientResponse("5")
-        # fake data for call of linksetDataWrite method with protection pass
-        case url if url.endswith("/linksetdata/write/testpkey"):
-            if data == "testpval¦pass":
-                return ClientResponse("0")
+            # fake data for call of linksetDataWrite method
+            case url if url.endswith("/linksetdata/delete/testkey"):
+                if data is None:
+                    return ClientResponse("0")
+            # fake data for call of linksetDataWrite method with not exist key
+            case url if url.endswith("/linksetdata/delete/notexistkey"):
+                if data is None:
+                    return ClientResponse("4")
+            # fake data for call of linksetDataWrite method with protection pass
+            case url if url.endswith("/linksetdata/delete/testpkey"):
+                if data == "pass":
+                    return ClientResponse("0")
 
-        # fake data for call of linksetDataWrite method
-        case url if url.endswith("/linksetdata/delete/testkey"):
-            if data is None:
-                return ClientResponse("0")
-        # fake data for call of linksetDataWrite method with not exist key
-        case url if url.endswith("/linksetdata/delete/notexistkey"):
-            if data is None:
-                return ClientResponse("4")
-        # fake data for call of linksetDataWrite method with protection pass
-        case url if url.endswith("/linksetdata/delete/testpkey"):
-            if data == "pass":
-                return ClientResponse("0")
-
-    return ClientResponse("")
+        return ClientResponse("")

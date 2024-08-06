@@ -1,18 +1,11 @@
-import os
 import pytest
 import asyncio
 from uuid import UUID
 
 
 @pytest.mark.unitstest
-def test_lslresponse(setup_env):
-    assert os.getenv("UNIT_TESTS")
-    from lslgwclient import LinkSet
-
-    ls = LinkSet(
-        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
-        + "/cap/00000000-0000-0000-0000-000000000000"
-    )
+def test_lslresponse(api, units_test_url):
+    ls = api.linkset(units_test_url)
     resp = asyncio.run(ls.info())
 
     nullId = UUID("00000000-0000-0000-0000-000000000000")

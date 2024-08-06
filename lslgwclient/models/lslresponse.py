@@ -4,14 +4,6 @@ import re
 
 from lslgwlib.models import HTTPData, Avatar, Region
 
-# choose different http request mechanism for unit tests
-import os
-
-if os.getenv("UNIT_TESTS"):
-    from tests.fakes.http import ClientResponse
-else:
-    from aiohttp import ClientResponse
-
 
 # LinkSet API responses model
 class LSLResponse(HTTPData):
@@ -19,7 +11,7 @@ class LSLResponse(HTTPData):
         # constructor by http response and parsed data
         if (
             len(args) == 2
-            and isinstance(args[0], ClientResponse)
+            and hasattr(args[0], "headers")
             and isinstance(args[1], BaseModel | list | int | float | str | UUID | None)
         ):
             headers: dict[str, str] = dict()

@@ -1,6 +1,11 @@
-import os
 import pytest
 import asyncio
+
+from lslgwclient.exceptions.linksetdata import (
+    LinksetDataNotFoundException,
+    LinksetDataNotUpdatedException,
+    LinksetDataProtectedException,
+)
 
 
 def clean(ls, keys: list[str | tuple[str, str]]) -> None:
@@ -15,14 +20,8 @@ def clean(ls, keys: list[str | tuple[str, str]]) -> None:
 
 
 @pytest.mark.unitstest
-def test_get_keys(setup_env):
-    assert os.getenv("UNIT_TESTS")
-    from lslgwclient import LinkSet
-
-    ls = LinkSet(
-        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
-        + "/cap/00000000-0000-0000-0000-000000000000"
-    )
+def test_get_keys(api, units_test_url):
+    ls = api.linkset(units_test_url)
     resp = asyncio.run(ls.linksetDataKeys())
 
     assert len(resp.data) == 10
@@ -31,10 +30,8 @@ def test_get_keys(setup_env):
 
 
 @pytest.mark.integrationtest
-def test_integration_keys(integration_test_url):
-    from lslgwclient import LinkSet
-
-    ls = LinkSet(integration_test_url)
+def test_integration_keys(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
     # clean
     clean(ls, ["testkey0", ("testkey1", "pass")])
     # make testing keys
@@ -51,15 +48,8 @@ def test_integration_keys(integration_test_url):
 
 
 @pytest.mark.unitstest
-def test_read(setup_env):
-    assert os.getenv("UNIT_TESTS")
-    from lslgwclient import LinkSet
-    from lslgwclient.exceptions.linksetdata import LinksetDataNotFoundException
-
-    ls = LinkSet(
-        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
-        + "/cap/00000000-0000-0000-0000-000000000000"
-    )
+def test_read(api, units_test_url):
+    ls = api.linkset(units_test_url)
 
     resp = asyncio.run(ls.linksetDataGet("testkey"))
     assert resp.data == "testval"
@@ -72,11 +62,8 @@ def test_read(setup_env):
 
 
 @pytest.mark.integrationtest
-def test_integration_read(integration_test_url):
-    from lslgwclient import LinkSet
-    from lslgwclient.exceptions.linksetdata import LinksetDataNotFoundException
-
-    ls = LinkSet(integration_test_url)
+def test_integration_read(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
     # clean
     clean(ls, ["testkey0", ("testkey1", "pass")])
     # make testing keys
@@ -96,15 +83,8 @@ def test_integration_read(integration_test_url):
 
 
 @pytest.mark.unitstest
-def test_write(setup_env):
-    assert os.getenv("UNIT_TESTS")
-    from lslgwclient import LinkSet
-    from lslgwclient.exceptions.linksetdata import LinksetDataNotUpdatedException
-
-    ls = LinkSet(
-        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
-        + "/cap/00000000-0000-0000-0000-000000000000"
-    )
+def test_write(api, units_test_url):
+    ls = api.linkset(units_test_url)
 
     resp = asyncio.run(ls.linksetDataWrite("testkey", "testval"))
     assert resp.data is None
@@ -117,11 +97,8 @@ def test_write(setup_env):
 
 
 @pytest.mark.integrationtest
-def test_integration_write(integration_test_url):
-    from lslgwclient import LinkSet
-    from lslgwclient.exceptions.linksetdata import LinksetDataNotUpdatedException
-
-    ls = LinkSet(integration_test_url)
+def test_integration_write(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
     # clean
     clean(ls, ["testkey0", ("testkey1", "pass")])
     # make testing keys
@@ -143,15 +120,8 @@ def test_integration_write(integration_test_url):
 
 
 @pytest.mark.unitstest
-def test_delete(setup_env):
-    assert os.getenv("UNIT_TESTS")
-    from lslgwclient import LinkSet
-    from lslgwclient.exceptions.linksetdata import LinksetDataNotFoundException
-
-    ls = LinkSet(
-        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
-        + "/cap/00000000-0000-0000-0000-000000000000"
-    )
+def test_delete(api, units_test_url):
+    ls = api.linkset(units_test_url)
 
     resp = asyncio.run(ls.linksetDataDelete("testkey"))
     assert resp.data is None
@@ -164,14 +134,8 @@ def test_delete(setup_env):
 
 
 @pytest.mark.integrationtest
-def test_integration_delete(integration_test_url):
-    from lslgwclient import LinkSet
-    from lslgwclient.exceptions.linksetdata import (
-        LinksetDataNotFoundException,
-        LinksetDataProtectedException,
-    )
-
-    ls = LinkSet(integration_test_url)
+def test_integration_delete(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
     # clean
     clean(ls, ["testkey0", ("testkey1", "pass")])
     # make testing keys

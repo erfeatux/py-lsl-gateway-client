@@ -1,3 +1,3 @@
-from .linkset import LinkSet
+from .client.api import API
 
-__all__ = ["LinkSet"]
+__all__ = ["API"]

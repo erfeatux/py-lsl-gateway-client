@@ -1,4 +1,3 @@
-import os
 import pytest
 import asyncio
 from uuid import UUID
@@ -12,14 +11,8 @@ class Values(BaseModel):
 
 
 @pytest.mark.unitstest
-def test_get_info(setup_env):
-    assert os.getenv("UNIT_TESTS")
-    from lslgwclient import LinkSet
-
-    ls = LinkSet(
-        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
-        + "/cap/00000000-0000-0000-0000-000000000000"
-    )
+def test_get_info(api, units_test_url):
+    ls = api.linkset(units_test_url)
     resp = asyncio.run(ls.info())
 
     tvs = Values(
@@ -41,10 +34,8 @@ def test_get_info(setup_env):
 
 
 @pytest.mark.integrationtest
-def test_integration_get_info(integration_test_url):
-    from lslgwclient import LinkSet
-
-    ls = LinkSet(integration_test_url)
+def test_integration_get_info(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
     resp = asyncio.run(ls.info())
     assert resp.data.owner.id.int  # not NULL_KEY
     assert resp.data.owner.modernName()

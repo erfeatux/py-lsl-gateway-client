@@ -1,5 +1,6 @@
-import os
 import pytest
+
+from lslgwclient import API
 
 
 def pytest_addoption(parser):
@@ -26,6 +27,19 @@ def integration_test_url(request):
 
 # choose different http request mechanism for unit tests
 @pytest.fixture(scope="session")
-def setup_env(integration_test_url):
+def api(integration_test_url):
+    api = API()
     if not integration_test_url:
-        os.environ["UNIT_TESTS"] = "true"
+        from tests.fakes.http import HTTP
+
+        api.container.http.override(HTTP)
+
+    return api
+
+
+@pytest.fixture(scope="session")
+def units_test_url():
+    return (
+        "https://simhost-0123456789abcdef0.agni.secondlife.io:12043"
+        + "/cap/00000000-0000-0000-0000-000000000000"
+    )
