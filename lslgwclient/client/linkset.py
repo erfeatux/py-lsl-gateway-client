@@ -6,7 +6,7 @@ import re
 
 from lslgwclient.models import LSLResponse
 from lslgwclient.exceptions import linksetDataExceptionByNum
-from lslgwlib.models import LinkSetInfo, PrimInfo, Avatar
+from lslgwlib.models import LinkSetInfo, PrimInfo, Avatar, Permissions
 from .basehttp import HTTP
 
 from logging import getLogger, Logger
@@ -56,6 +56,7 @@ class LinkSet:
                 createdAt=body[7],
                 rezzedAt=body[8],
                 scriptName=body[9],
+                permissions=Permissions(*body[10:]),
             ),
         )
         self.__id = lslresp.data.id

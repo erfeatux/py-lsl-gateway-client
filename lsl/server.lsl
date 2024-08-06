@@ -53,6 +53,9 @@ processRequest(key request_id, string method, string path, list data)
 				OBJECT_REZ_TIME
 			]);
 		details += [llGetScriptName()];
+		integer i;
+		for (i=0;i<5;i++)
+			details += [llGetObjectPermMask(i)];
 		llHTTPResponse(request_id, 200, llDumpList2String(details, "¦"));
 	}
 	else if (method == "GET" && llGetSubString(path, 0, 5) == "/prims" && llGetListLength(data) == 0)
