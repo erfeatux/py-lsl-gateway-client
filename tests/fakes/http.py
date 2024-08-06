@@ -3,10 +3,13 @@
 
 from uuid import uuid4
 
+from lslgwclient.client.basehttp import HTTP as BaseHTTP
+from lslgwclient.client.basehttp import ClientResponse as BaseClientResponse
+
 creatorId = uuid4()
 
 
-class ClientResponse:
+class ClientResponse(BaseClientResponse):
     __text: str
     headers: dict[str, str] = {
         "Date": "Sat, 27 Jul 2024 22:38:52 GMT",
@@ -36,7 +39,7 @@ class ClientResponse:
         return self.__text
 
 
-class HTTP:
+class HTTP(BaseHTTP):
     # http get method
     @staticmethod
     async def get(url: str) -> ClientResponse:

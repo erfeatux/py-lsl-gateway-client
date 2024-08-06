@@ -7,6 +7,7 @@ import re
 from lslgwclient.models import LSLResponse
 from lslgwclient.exceptions import linksetDataExceptionByNum
 from lslgwlib.models import LinkSetInfo, PrimInfo, Avatar
+from .basehttp import HTTP
 
 from logging import getLogger, Logger
 
@@ -19,15 +20,14 @@ class LinkSet:
         + r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
         re.IGNORECASE,
     )
-    __http: object
+    __http: HTTP
     __url: str
     __id: UUID
 
     # contructor by LSLHttp url
-    @validate_call
-    def __init__(
-        self, http: object, url: Annotated[str, Field(pattern=__urlPattern)]
-    ) -> None:
+    def __init__(self, http: HTTP, url: str) -> None:
+        if not self.__urlPattern.match(url):
+            raise ValueError(f"Invalid url: {url}")
         self.__url = url.lower()
         self.__http = http
         asyncio.run(self.info())

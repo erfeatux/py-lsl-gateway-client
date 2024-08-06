@@ -8,6 +8,9 @@ import aiohttp
 import os.path
 import ssl
 
+from .basehttp import HTTP as BaseHTTP
+from .basehttp import ClientResponse as BaseClientResponse
+
 from logging import getLogger
 
 log = getLogger(__name__)
@@ -26,10 +29,22 @@ if not _sslcontext:
     _sslcontext.set_ciphers("ALL:@SECLEVEL=1")
 
 
-class HTTP:
+class ClientResponse(BaseClientResponse):
+    __resp: aiohttp.ClientResponse
+    headers: dict[str, str]
+
+    def __init__(self, resp: aiohttp.ClientResponse) -> None:
+        self.__resp = resp
+        self.headers = dict(resp.headers)
+
+    async def text(self) -> str:
+        return await self.__resp.text()
+
+
+class HTTP(BaseHTTP):
     # http get method
     @staticmethod
-    async def get(url: str) -> aiohttp.ClientResponse:
+    async def get(url: str) -> ClientResponse:
         log.debug(f"{url=}")
         async with aiohttp.ClientSession() as session:
             async with session.get(url, ssl=_sslcontext) as resp:
@@ -38,11 +53,11 @@ class HTTP:
                     e = HTTP.__exceptionByResp(resp)
                     log.error(e)
                     raise e
-                return resp
+                return ClientResponse(resp)
 
     # http post method
     @staticmethod
-    async def post(url: str, data: str | None) -> aiohttp.ClientResponse:
+    async def post(url: str, data: str | None) -> ClientResponse:
         log.debug(f"{url=}; {data=}")
         async with aiohttp.ClientSession() as session:
             async with session.post(url, data=data, ssl=_sslcontext) as resp:
@@ -51,7 +66,7 @@ class HTTP:
                     e = HTTP.__exceptionByResp(resp)
                     log.error(e)
                     raise e
-                return resp
+                return ClientResponse(resp)
 
     # select exception type by responce.status
     @staticmethod
