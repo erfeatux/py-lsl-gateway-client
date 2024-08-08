@@ -229,14 +229,39 @@ processRequest(key request_id, string method, string path, list data, list query
 		}
 		llHTTPResponse(request_id, 200, resp);
 	}
-	else if (method == "POST" && llGetSubString(path, 0, 16) == "/inventory/delete" && llGetListLength(data))
+	else if (method == "POST" && llGetSubString(path, 0, -1) == "/inventory/delete" && llGetListLength(data))
 	{
 		integer i;
 		for (i=0;i<llGetListLength(data);i++)
 			if (llGetInventoryType(llList2String(data, i)) == -1)
+			{
 				llHTTPResponse(request_id, 422, "'" + llList2String(data, i) + "' not found");
+				return;
+			}
 		for (i=0;i<llGetListLength(data);i++)
 			llRemoveInventory(llList2String(data, i));
+		llHTTPResponse(request_id, 200, "Ok");
+	}
+	else if (method == "POST" && llGetSubString(path, 0, -1) == "/inventory/give"
+				&& llGetListLength(data) == 2)
+	{
+		if (llGetInventoryType(llList2String(data, 1)) == -1)
+		{
+			llHTTPResponse(request_id, 422, "'" + llList2String(data, 1) + "' not found");
+			return;
+		}
+		if (!(llGetInventoryPermMask(llList2String(data, 1), MASK_OWNER) & PERM_TRANSFER))
+		{
+			llHTTPResponse(request_id, 403, "'" + llList2String(data, 1) + "' not transfer permission");
+			return;
+		}
+		if (llList2String(data, 0) == NULL_KEY)
+		{
+			llHTTPResponse(request_id, 400,
+							"'" + llList2String(data, 1) + "' Can't give inventory to NULL_KEY");
+			return;
+		}
+		llGiveInventory(llList2String(data, 0), llList2String(data, 1));
 		llHTTPResponse(request_id, 200, "Ok");
 	}
 	else//unknown request

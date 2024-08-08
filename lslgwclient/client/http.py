@@ -55,7 +55,7 @@ class HTTP(BaseHTTP):
             async with session.get(url, ssl=_sslcontext) as resp:
                 log.debug(f"{resp}{await resp.text()}")
                 if resp.status not in range(200, 203):
-                    e = HTTP.__exceptionByResp(resp)
+                    e = await HTTP.__exceptionByResp(resp)
                     log.error(e)
                     raise e
                 return ClientResponse(resp)
@@ -68,7 +68,7 @@ class HTTP(BaseHTTP):
             async with session.post(url, data=data, ssl=_sslcontext) as resp:
                 await resp.text()
                 if resp.status not in range(200, 203):
-                    e = HTTP.__exceptionByResp(resp)
+                    e = await HTTP.__exceptionByResp(resp)
                     log.error(e)
                     raise e
                 return ClientResponse(resp)

@@ -165,11 +165,21 @@ class HTTP(BaseHTTP):
             case url if url.endswith("/linksetdata/delete/testpkey"):
                 if data == "pass":
                     return ClientResponse("0")
-            #
+            # fake data for delete not exist item
             case url if url.endswith("/inventory/delete"):
-                if data == "notexistitem":
-                    raise HTTP.__exceptionByResp(
-                        ClientResponse("", 422, "'notexistitem' not found")
+                if data and "notexistitem" in data.split("¦"):
+                    raise await HTTP.__exceptionByResp(
+                        ClientResponse(
+                            "'notexistitem' not found", 422, "'notexistitem' not found"
+                        )
+                    )
+            # fake data for give not exist item
+            case url if url.endswith("/inventory/give"):
+                if data and "notexistitem" == data.split("¦")[1]:
+                    raise await HTTP.__exceptionByResp(
+                        ClientResponse(
+                            "'notexistitem' not found", 422, "'notexistitem' not found"
+                        )
                     )
 
         return ClientResponse("")

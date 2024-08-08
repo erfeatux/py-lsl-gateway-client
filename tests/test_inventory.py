@@ -1,17 +1,11 @@
 import pytest
 import random
 import asyncio
-from uuid import UUID
-from datetime import datetime
-from pydantic import BaseModel
-from aiohttp.web_exceptions import HTTPUnprocessableEntity
+from copy import copy
+from uuid import uuid4, UUID
+from aiohttp.web_exceptions import HTTPUnprocessableEntity, HTTPForbidden
 
 from lslgwlib.enums import InvetoryType
-
-
-class Values(BaseModel):
-    id: UUID
-    date: datetime
 
 
 @pytest.mark.unitstest
@@ -62,3 +56,40 @@ def test_integration_delete_inventory(api, integration_test_url):
 
     with pytest.raises(HTTPUnprocessableEntity):
         asyncio.run(ls.inventoryDelete(["notexistitem"]))
+
+
+@pytest.mark.unitstest
+def test_give_inventory(api, units_test_url):
+    ls = api.linkset(units_test_url)
+    asyncio.run(ls.inventoryGive(uuid4(), "itemname"))
+    with pytest.raises(HTTPUnprocessableEntity):
+        asyncio.run(ls.inventoryGive(uuid4(), "notexistitem"))
+    with pytest.raises(ValueError):
+        asyncio.run(ls.inventoryGive(UUID(int=0), "itemname"))
+
+
+@pytest.mark.integrationtest
+def test_integration_give_inventory(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
+    resp = asyncio.run(ls.info())
+    scriptName = resp.data.scriptName
+    ownerId = resp.data.owner.id
+    resp = asyncio.run(ls.inventoryRead())
+    names = resp.data.names()
+    names.remove(scriptName)
+    notransferables = copy(names)
+    for item in resp.data.items:
+        if item.name != scriptName:
+            if item.permissions.owner.TRANSFER:
+                notransferables.remove(item.name)
+            else:
+                names.remove(item.name)
+    assert len(names)
+    assert len(notransferables)
+
+    asyncio.run(ls.inventoryGive(ownerId, random.choice(names)))
+
+    with pytest.raises(HTTPForbidden):
+        asyncio.run(ls.inventoryGive(ownerId, random.choice(notransferables)))
+    with pytest.raises(HTTPUnprocessableEntity):
+        asyncio.run(ls.inventoryGive(ownerId, "notexistitem"))

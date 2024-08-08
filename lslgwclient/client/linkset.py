@@ -249,3 +249,18 @@ class LinkSet:
             await dosend(body)
 
         self.__log.debug(f"{len(items)} deleted inventory items")
+
+    # give inventory item
+    @validate_call
+    async def inventoryGive(
+        self,
+        destination: UUID,
+        item: Annotated[str, Field(pattern=r"^[\x20-\x7b\x7d-\x7e]{1,63}$")],
+    ):
+        if not destination.int:
+            raise ValueError("Can't give inventory to NULL_KEY")
+        resp = await self.__http.post(
+            f"{self.__url}/inventory/give", f"{destination}¦{item}"
+        )
+        self.__log.debug(f"Given to {destination} '{item}' inventory item")
+        return LSLResponse(resp, await resp.text())

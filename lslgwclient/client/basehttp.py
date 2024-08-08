@@ -46,11 +46,14 @@ class HTTP:
     # select exception type by responce.status
     @staticmethod
     @validate_call
-    def __exceptionByResp(
+    async def __exceptionByResp(
         resp=Annotated[ClientResponse, Field()]
     ) -> excepts.HTTPException:
         code = resp.status
-        if resp.reason:
+        text = await resp.text()
+        if text:
+            reason = text
+        elif resp.reason:
             reason = resp.reason
         else:
             reason = None
