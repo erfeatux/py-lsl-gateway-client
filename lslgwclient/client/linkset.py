@@ -224,3 +224,28 @@ class LinkSet:
 
         self.__log.debug(f"{len(items)} inventory items")
         return LSLResponse(resp, Invetory(items=items, filtered=bytype))
+
+    # delete from inventory
+    @validate_call
+    async def inventoryDelete(self, items: Annotated[list[str], Field(min_length=1)]):
+        for item in items:
+            if not re.match(r"^[\x20-\x7b\x7d-\x7e]{1,63}$", item):
+                raise ValueError(f"'{item}' is not valid item name")
+
+        async def dosend(body: str) -> None:
+            await self.__http.post(f"{self.__url}/inventory/delete", body)
+            body = ""
+
+        body = ""
+        for item in items:
+            if len(body.encode("UTF-8")) + 2 + len(item) > 2048:
+                await dosend(body)
+                body = ""
+            if len(body):
+                body += f"¦{item}"
+            else:
+                body = item
+        if len(body):
+            await dosend(body)
+
+        self.__log.debug(f"{len(items)} deleted inventory items")

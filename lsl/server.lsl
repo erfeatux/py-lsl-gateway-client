@@ -229,6 +229,16 @@ processRequest(key request_id, string method, string path, list data, list query
 		}
 		llHTTPResponse(request_id, 200, resp);
 	}
+	else if (method == "POST" && llGetSubString(path, 0, 16) == "/inventory/delete" && llGetListLength(data))
+	{
+		integer i;
+		for (i=0;i<llGetListLength(data);i++)
+			if (llGetInventoryType(llList2String(data, i)) == -1)
+				llHTTPResponse(request_id, 422, "'" + llList2String(data, i) + "' not found");
+		for (i=0;i<llGetListLength(data);i++)
+			llRemoveInventory(llList2String(data, i));
+		llHTTPResponse(request_id, 200, "Ok");
+	}
 	else//unknown request
 		llHTTPResponse(request_id, 501, "Not Implemented");
 }

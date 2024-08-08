@@ -3,7 +3,6 @@
 
 from logging import getLogger
 from uuid import uuid4
-import re
 
 from lslgwclient.client.basehttp import HTTP as BaseHTTP
 from lslgwclient.client.basehttp import ClientResponse as BaseClientResponse
@@ -14,6 +13,8 @@ log = getLogger(__name__)
 
 class ClientResponse(BaseClientResponse):
     __text: str
+    __status: int
+    __reason: str | None
     headers: dict[str, str] = {
         "Date": "Sat, 27 Jul 2024 22:38:52 GMT",
         "Server": "Second Life LSL/Second Life Server 2024-06-11.9458617693 (http://secondlife.com)",
@@ -35,11 +36,21 @@ class ClientResponse(BaseClientResponse):
         "Connection": "close",
     }
 
-    def __init__(self, text: str) -> None:
+    def __init__(self, text: str, status: int = 200, reason: str | None = None) -> None:
         self.__text = text
+        self.__status = status
+        self.__reason = reason
 
     async def text(self) -> str:
         return self.__text
+
+    @property
+    def status(self) -> int:
+        return self.__status
+
+    @property
+    def reason(self) -> str | None:
+        return self.__reason
 
 
 class HTTP(BaseHTTP):
@@ -154,5 +165,11 @@ class HTTP(BaseHTTP):
             case url if url.endswith("/linksetdata/delete/testpkey"):
                 if data == "pass":
                     return ClientResponse("0")
+            #
+            case url if url.endswith("/inventory/delete"):
+                if data == "notexistitem":
+                    raise HTTP.__exceptionByResp(
+                        ClientResponse("", 422, "'notexistitem' not found")
+                    )
 
         return ClientResponse("")
