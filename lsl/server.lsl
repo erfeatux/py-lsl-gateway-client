@@ -33,7 +33,7 @@ integer lineLimit()
 //////////////////////////////
 //processRequest//////////////
 //process all incoming http requests
-processRequest(key request_id, string method, string path, list data)
+processRequest(key request_id, string method, string path, list data, list query)
 {
 	if (method == "GET" && path == "/info" && llGetListLength(data) == 0)
 	{//linkset info
@@ -172,6 +172,63 @@ processRequest(key request_id, string method, string path, list data)
 		string pass = llList2String(data, 0);
 		llHTTPResponse(request_id, 200, (string)llLinksetDataDeleteProtected(name, pass));
 	}
+	else if (method == "GET" && llGetSubString(path, 0, 14) == "/inventory/read"
+			&& llGetListLength(data) == 0)
+	{//get inventory
+		integer i = 0;
+		integer type = INVENTORY_ALL;
+		if (llGetListLength(query) == 2 && llList2String(query, 0) == "type"
+			&& isInteger(llList2String(query, 1)))
+		{
+			integer it = (integer)llList2String(query, 1);
+			if (llListFindList([INVENTORY_TEXTURE, INVENTORY_SOUND, INVENTORY_LANDMARK,
+								INVENTORY_CLOTHING, INVENTORY_OBJECT, INVENTORY_NOTECARD,
+								INVENTORY_SCRIPT, INVENTORY_BODYPART, INVENTORY_ANIMATION,
+								INVENTORY_GESTURE, INVENTORY_SETTING, INVENTORY_MATERIAL],
+								[it]) != -1)
+				type = it;
+		}
+		// if have num argument, start processing from this key
+		if (isInteger(llGetSubString(path, 16, -1)))
+		{
+			i = (integer)llGetSubString(path, 16, -1);
+		}
+		integer len = 0;
+		string resp = "";
+		for (;i<llGetInventoryNumber(type);i++)
+		{
+			string name = llGetInventoryName(type, i);
+			list details = [llGetInventoryKey(name),
+							llGetInventoryType(name),
+							name,
+							llGetInventoryDesc(name),
+							llGetInventoryCreator(name),
+							llGetInventoryPermMask(name, MASK_BASE),
+							llGetInventoryPermMask(name, MASK_OWNER),
+							llGetInventoryPermMask(name, MASK_GROUP),
+							llGetInventoryPermMask(name, MASK_EVERYONE),
+							llGetInventoryPermMask(name, MASK_NEXT),
+							llGetInventoryAcquireTime(name)];
+			string line = llDumpList2String(details, "¦");
+			integer lineLen = llStringLength(line) + 10;
+			if (len + lineLen + 2 > lineLimit())
+			{//memory limit reached, finish adding to response body
+				llHTTPResponse(request_id, 200, resp + "\n+");
+				return;
+			}
+			else
+			{
+				if (len)
+				{//not first in body, add delimiter
+					resp += "\n";
+					len++;
+				}
+				resp += line;
+				len += lineLen;
+			}
+		}
+		llHTTPResponse(request_id, 200, resp);
+	}
 	else//unknown request
 		llHTTPResponse(request_id, 501, "Not Implemented");
 }
@@ -197,9 +254,20 @@ default
 		else
 		{
 			string path = llGetHTTPHeader(request_id, "x-path-info");
-			llOwnerSay(path + " - " + method + ": \n" + body);
+			// string query = llGetHTTPHeader(request_id, "x-query-string");
+			//a0=v0&a1=v1
+			list query;
+			list querystring = llParseString2List(llGetHTTPHeader(request_id, "x-query-string"), ["&"], []);
+			integer i;
+			for (i=0;i<llGetListLength(querystring);i++)
+			{
+				list lst = llParseString2List(llList2String(querystring, i), ["="], []);
+				if (llGetListLength(lst) == 2)
+					query += lst;
+			}
+			llOwnerSay(path + " - " + method + ", args: '" + llList2CSV(query) + "': \n" + body);
 			list data = llParseString2List(body, ["¦"], []);
-			processRequest(request_id, method, path, data);
+			processRequest(request_id, method, path, data, query);
 			integer iFM = llGetFreeMemory();
 			integer iUM = llGetUsedMemory();
 			llOwnerSay("Used mem: " +(string)iUM + " Free mem: " + (string)iFM

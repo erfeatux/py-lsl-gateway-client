@@ -6,7 +6,15 @@ import re
 
 from lslgwclient.models import LSLResponse
 from lslgwclient.exceptions import linksetDataExceptionByNum
-from lslgwlib.models import LinkSetInfo, PrimInfo, Avatar, Permissions
+from lslgwlib.models import (
+    LinkSetInfo,
+    PrimInfo,
+    Avatar,
+    Permissions,
+    Invetory,
+    InvetoryItem,
+)
+from lslgwlib.enums import InvetoryType
 from .basehttp import HTTP
 
 from logging import getLogger, Logger
@@ -93,17 +101,14 @@ class LinkSet:
                 faces=info[4],
             )
 
-        # load first part from server.lsl
-        resp = await self.__http.get(f"{self.__url}/prims")
-        body = (await resp.text()).splitlines()
-        print("body", f'"{await resp.text()}"')
-        for line in body:
-            if line != "+":
-                prims.append(primInfo(line.split("¦")))
+        body = ["+"]
 
-        # load next parts while exists
+        # load parts while exists
         while body and body[-1] == "+":
-            resp = await self.__http.get(f"{self.__url}/prims/{len(prims)+1}")
+            if len(prims):
+                resp = await self.__http.get(f"{self.__url}/prims/{len(prims)+1}")
+            else:
+                resp = await self.__http.get(f"{self.__url}/prims")
             body = (await resp.text()).splitlines()
             for line in body:
                 if line != "+":
@@ -115,23 +120,22 @@ class LinkSet:
     # get all linkset data keys
     async def linksetDataKeys(self) -> LSLResponse:
         keys: list[str] = list()
-        resp = await self.__http.get(f"{self.__url}/linksetdata/keys")
-        text = await resp.text()
-        if not text:
-            return LSLResponse(resp, keys)
-        body = text.split("¦")
-        if body[-1] == "+":
-            keys.extend(body[:-1])
-        else:
-            keys.extend(body)
+        body = ["+"]
+
         while body[-1] == "+":
-            resp = await self.__http.get(f"{self.__url}/linksetdata/keys/{len(keys)+1}")
+            if len(keys):
+                resp = await self.__http.get(
+                    f"{self.__url}/linksetdata/keys/{len(keys)+1}"
+                )
+            else:
+                resp = await self.__http.get(f"{self.__url}/linksetdata/keys")
             body = (await resp.text()).split("¦")
             if body[-1] == "+":
                 keys.extend(body[:-1])
             else:
                 keys.extend(body)
-        self.__log.debug(f"{len(keys)} prims")
+
+        self.__log.debug(f"{len(keys)} linkset data keys")
         return LSLResponse(resp, keys)
 
     # get linkset data value by key
@@ -183,3 +187,40 @@ class LinkSet:
         if num:
             raise linksetDataExceptionByNum(num, key)
         return LSLResponse(resp, None)
+
+    # load inventory
+    @validate_call
+    async def inventoryRead(
+        self, bytype: InvetoryType = InvetoryType.ANY
+    ) -> LSLResponse:
+        items: list[InvetoryItem] = list()
+        body = ["+"]
+
+        while body[-1] == "+":
+            if len(items):
+                resp = await self.__http.get(
+                    f"{self.__url}/inventory/read/{len(items)+1}?type={bytype}"
+                )
+            else:
+                resp = await self.__http.get(
+                    f"{self.__url}/inventory/read?type={bytype}"
+                )
+            text = await resp.text()
+            body = text.split("\n")
+            for line in body:
+                if line != "+":
+                    args = line.split("¦")
+                    items.append(
+                        InvetoryItem(
+                            id=args[0],
+                            type=args[1],
+                            name=args[2],
+                            description=args[3],
+                            creatorId=args[4],
+                            permissions=Permissions(*args[5:10]),
+                            acquireTime=args[10],
+                        )
+                    )
+
+        self.__log.debug(f"{len(items)} inventory items")
+        return LSLResponse(resp, Invetory(items=items, filtered=bytype))

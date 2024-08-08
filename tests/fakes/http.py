@@ -1,12 +1,15 @@
 # this module contains the http request mechanism
 # fake for unit tests
 
+from logging import getLogger
 from uuid import uuid4
+import re
 
 from lslgwclient.client.basehttp import HTTP as BaseHTTP
 from lslgwclient.client.basehttp import ClientResponse as BaseClientResponse
 
 creatorId = uuid4()
+log = getLogger(__name__)
 
 
 class ClientResponse(BaseClientResponse):
@@ -43,6 +46,7 @@ class HTTP(BaseHTTP):
     # http get method
     @staticmethod
     async def get(url: str) -> ClientResponse:
+        log.debug(f"{url=}")
         match url.lower():
             # fake data for info method
             case url if url.endswith("/info"):
@@ -83,12 +87,42 @@ class HTTP(BaseHTTP):
             # fake data for call of linksetDataGet method with not exist key
             case url if url.endswith("/linksetdata/read/notexistkey"):
                 return ClientResponse("")
+            # fake data for call of inventoryRead method with notecard type
+            case url if "/inventory/read?type=7" in url:
+                return ClientResponse(
+                    "fd42e87a-44d8-1343-9ecd-fc7dd23f6765¦7¦A&Y Re-delivery issue"
+                    + "¦2023-03-03 21:17:52 note card¦bf1d107f-2c7a-4e0b-9cac-d2b30ccd2821"
+                    + "¦581632¦581632¦0¦0¦581632¦2024-08-07T00:32:31Z"
+                    + "\n0c13f3e7-7d41-5675-ee70-fa9309319f07¦7¦New Note¦2022-05-30 19:59:13 note card"
+                    + "¦07ce6a4a-b34e-4e62-96e3-16f2a8b19c89¦2147483647¦2147483647"
+                    + "¦0¦0¦581632¦2024-08-07T00:32:31Z"
+                )
+            # fake data for first call of inventoryRead method
+            case url if "/inventory/read?" in url:
+                return ClientResponse(
+                    "fd42e87a-44d8-1343-9ecd-fc7dd23f6765¦7¦A&Y Re-delivery issue"
+                    + "¦2023-03-03 21:17:52 note card¦bf1d107f-2c7a-4e0b-9cac-d2b30ccd2821"
+                    + "¦581632¦581632¦0¦0¦581632¦2024-08-07T00:32:31Z"
+                    + "\n488c4978-99e3-449a-4c98-5fc221e5a7a5¦0¦A&Y_logo¦(No Description)"
+                    + "¦0c2566cd-2ac9-4566-bab4-a3c4bfce58bd¦581632¦581632¦0¦0¦581632¦2024-08-07T00:32:43Z"
+                    + "\n0c13f3e7-7d41-5675-ee70-fa9309319f07¦7¦New Note¦2022-05-30 19:59:13 note card"
+                    + "¦07ce6a4a-b34e-4e62-96e3-16f2a8b19c89¦2147483647¦2147483647"
+                    + "¦0¦0¦581632¦2024-08-07T00:32:31Z\n+"
+                )
+            # fake data for second call of inventoryRead method
+            case url if "/inventory/read" in url:
+                return ClientResponse(
+                    "00cc5bf5-2e03-8cfa-3c36-fc5b40238d7f¦10¦New Script¦2024-08-07 03:42:12 lsl2 script"
+                    + "¦07ce6a4a-b34e-4e62-96e3-16f2a8b19c89¦2147483647¦2147483647"
+                    + "¦0¦0¦532480¦2024-08-06T23:42:12Z"
+                )
 
         return ClientResponse("")
 
     # http get method
     @staticmethod
     async def post(url: str, data: str | None) -> ClientResponse:
+        log.debug(f"{url=}; {data=}")
         match url.lower():
             # fake data for call of linksetDataGet method with protection pass
             case url if url.endswith("/linksetdata/read/testpkey"):
