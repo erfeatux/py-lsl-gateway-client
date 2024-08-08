@@ -54,7 +54,6 @@ def test_integration_delete_inventory(api, integration_test_url):
     itemsNum = len(resp.data.items)
     names = resp.data.names()
     names.remove(scriptName)
-    print(names)
     assert len(names)
 
     asyncio.run(ls.inventoryDelete([random.choice(names)]))
