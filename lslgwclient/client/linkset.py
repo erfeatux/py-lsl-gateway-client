@@ -199,7 +199,7 @@ class LinkSet:
         while body[-1] == "+":
             if len(items):
                 resp = await self.__http.get(
-                    f"{self.__url}/inventory/read/{len(items)+1}?type={bytype}"
+                    f"{self.__url}/inventory/read/{len(items)}?type={bytype}"
                 )
             else:
                 resp = await self.__http.get(
@@ -259,8 +259,27 @@ class LinkSet:
     ):
         if not destination.int:
             raise ValueError("Can't give inventory to NULL_KEY")
-        resp = await self.__http.post(
-            f"{self.__url}/inventory/give", f"{destination}¦{item}"
-        )
+        await self.__http.post(f"{self.__url}/inventory/give", f"{destination}¦{item}")
+
         self.__log.debug(f"Given to {destination} '{item}' inventory item")
-        return LSLResponse(resp, await resp.text())
+
+    # give inventory items list
+    @validate_call
+    async def inventoryGiveList(
+        self,
+        destination: UUID,
+        folder: Annotated[str, Field(pattern=r"^[\x20-\x7b\x7d-\x7e]{1,63}$")],
+        items: Annotated[list[str], Field(min_length=1, max_length=41)],
+    ):
+        for item in items:
+            if not re.match(r"^[\x20-\x7b\x7d-\x7e]{1,63}$", item):
+                raise ValueError(f"'{item}' is not valid item name")
+
+        if not destination.int:
+            raise ValueError("Can't give inventory to NULL_KEY")
+        body = f'{destination}¦{folder}¦{"¦".join(items)}'
+        if len(body.encode("UTF-8")) > 2048:
+            raise ValueError("Too big")
+        await self.__http.post(f"{self.__url}/inventory/givelist", body)
+
+        self.__log.debug(f"Given to {destination} '{folder}' inventory items list")

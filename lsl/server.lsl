@@ -264,6 +264,38 @@ processRequest(key request_id, string method, string path, list data, list query
 		llGiveInventory(llList2String(data, 0), llList2String(data, 1));
 		llHTTPResponse(request_id, 200, "Ok");
 	}
+	else if (method == "POST" && llGetSubString(path, 0, -1) == "/inventory/givelist"
+				&& llGetListLength(data) > 2)
+	{
+		integer i;
+		if (llGetListLength(data) > 43)
+		{
+			llHTTPResponse(request_id, 413,
+							"'" + llList2String(data, 0) + "' No more than 41 items");
+			return;
+		}
+		if (!llGetListLength(llGetObjectDetails(llList2String(data, 0), [OBJECT_NAME])))
+		{
+			llHTTPResponse(request_id, 400,
+							"'" + llList2String(data, 0) + "' Destination must be in same region");
+			return;
+		}
+		for (i=2;i<llGetListLength(data);i++)
+		{
+			if (llGetInventoryType(llList2String(data, i)) == -1)
+			{
+				llHTTPResponse(request_id, 422, "'" + llList2String(data, i) + "' not found");
+				return;
+			}
+			if (!(llGetInventoryPermMask(llList2String(data, i), MASK_OWNER) & PERM_TRANSFER))
+			{
+				llHTTPResponse(request_id, 403, "'" + llList2String(data, i) + "' not transfer permission");
+				return;
+			}
+		}
+		llGiveInventoryList(llList2String(data, 0), llList2String(data, 1), llList2List(data, 2, -1));
+		llHTTPResponse(request_id, 200, "Ok");
+	}
 	else//unknown request
 		llHTTPResponse(request_id, 501, "Not Implemented");
 }

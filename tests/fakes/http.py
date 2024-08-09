@@ -181,5 +181,13 @@ class HTTP(BaseHTTP):
                             "'notexistitem' not found", 422, "'notexistitem' not found"
                         )
                     )
+            # fake data for give list with not exist item
+            case url if url.endswith("/inventory/givelist"):
+                if data and "notexistitem" in data.split("¦")[2:]:
+                    raise await HTTP.__exceptionByResp(
+                        ClientResponse(
+                            "'notexistitem' not found", 422, "'notexistitem' not found"
+                        )
+                    )
 
         return ClientResponse("")

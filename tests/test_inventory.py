@@ -3,7 +3,12 @@ import random
 import asyncio
 from copy import copy
 from uuid import uuid4, UUID
-from aiohttp.web_exceptions import HTTPUnprocessableEntity, HTTPForbidden
+from pydantic import ValidationError
+from aiohttp.web_exceptions import (
+    HTTPUnprocessableEntity,
+    HTTPForbidden,
+    HTTPBadRequest,
+)
 
 from lslgwlib.enums import InvetoryType
 
@@ -93,3 +98,65 @@ def test_integration_give_inventory(api, integration_test_url):
         asyncio.run(ls.inventoryGive(ownerId, random.choice(notransferables)))
     with pytest.raises(HTTPUnprocessableEntity):
         asyncio.run(ls.inventoryGive(ownerId, "notexistitem"))
+
+
+@pytest.mark.unitstest
+def test_give_inventory_list(api, units_test_url):
+    ls = api.linkset(units_test_url)
+    asyncio.run(ls.inventoryGiveList(uuid4(), "foldername", ["itemname"]))
+    with pytest.raises(HTTPUnprocessableEntity):
+        asyncio.run(ls.inventoryGiveList(uuid4(), "foldername", ["notexistitem"]))
+    with pytest.raises(ValueError):
+        asyncio.run(ls.inventoryGiveList(UUID(int=0), "foldername", ["item"]))
+    with pytest.raises(ValidationError):
+        asyncio.run(ls.inventoryGiveList(UUID(int=0), "foldername" * 7, ["item"]))
+    with pytest.raises(ValueError):
+        asyncio.run(
+            ls.inventoryGiveList(
+                uuid4(),
+                "foldername",
+                ["verrryyyyyyloooooongitemname{:032d}".format(x) for x in range(41)],
+            )
+        )
+    with pytest.raises(ValidationError):
+        asyncio.run(
+            ls.inventoryGiveList(
+                uuid4(),
+                "foldername",
+                ["verrryyyyyyloooooongitemname{:03d}".format(x) for x in range(42)],
+            )
+        )
+
+
+@pytest.mark.integrationtest
+def test_integration_give_inventory_list(api, integration_test_url):
+    ls = api.linkset(integration_test_url)
+    resp = asyncio.run(ls.info())
+    scriptName = resp.data.scriptName
+    ownerId = resp.data.owner.id
+    resp = asyncio.run(ls.inventoryRead())
+    names = resp.data.names()
+    print(scriptName, names)
+    names.remove(scriptName)
+    notransferables = copy(names)
+    for item in resp.data.items:
+        if item.name != scriptName:
+            if item.permissions.owner.TRANSFER:
+                notransferables.remove(item.name)
+            else:
+                names.remove(item.name)
+    assert len(names)
+    assert len(notransferables)
+
+    asyncio.run(ls.inventoryGiveList(ownerId, "foldername", names))
+
+    with pytest.raises(HTTPBadRequest):
+        asyncio.run(ls.inventoryGiveList(uuid4(), "foldername", names))
+    with pytest.raises(HTTPForbidden):
+        asyncio.run(
+            ls.inventoryGiveList(
+                ownerId, "foldername", [random.choice(notransferables)]
+            )
+        )
+    with pytest.raises(HTTPUnprocessableEntity):
+        asyncio.run(ls.inventoryGiveList(ownerId, "foldername", ["notexistitem"]))
