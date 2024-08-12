@@ -38,7 +38,7 @@ class LinkSet:
             raise ValueError(f"Invalid url: {url}")
         self.__url = url.lower()
         self.__http = http
-        asyncio.run(self.info())
+        # asyncio.run(self.info())
         self.__log.info(url)
 
     # API info method
