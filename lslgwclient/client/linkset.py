@@ -1,7 +1,7 @@
 from pydantic import validate_call, Field
 from typing_extensions import Annotated
 from uuid import UUID, uuid5
-import asyncio
+from typing import Sequence
 import re
 
 from lslgwclient.models import LSLResponse
@@ -22,6 +22,8 @@ from logging import getLogger, Logger
 
 # provides API for server.lsl inworld
 class LinkSet:
+    """LinkSet - provides LSL object interaction"""
+
     __log: Logger = getLogger()
     __urlPattern = re.compile(
         r"^https://[-a-z0-9@:%_\+~#=]{1,255}\.agni\.secondlife\.io:12043/cap/"
@@ -38,11 +40,14 @@ class LinkSet:
             raise ValueError(f"Invalid url: {url}")
         self.__url = url.lower()
         self.__http = http
-        # asyncio.run(self.info())
         self.__log.info(url)
 
     # API info method
     async def info(self) -> LSLResponse:
+        """LSL object base stats
+
+        returns LSLResponse.data: LinkSetInfo
+        """
         resp = await self.__http.get(f"{self.__url}/info")
         body = (await resp.text()).split("¦")
         lslresp = LSLResponse(
@@ -74,6 +79,10 @@ class LinkSet:
 
     # API prims method
     async def prims(self) -> LSLResponse:
+        """LSL object linkset prims
+
+        returns LSLResponse.data: list[PrimInfo]
+        """
         # list of downloaded prims info
         prims: list[PrimInfo] = list()
         # already used ids (for exclude doubles)
@@ -119,6 +128,10 @@ class LinkSet:
 
     # get all linkset data keys
     async def linksetDataKeys(self) -> LSLResponse:
+        """LSL object likset data keys
+
+        returns LSLResponse.data: list[str]
+        """
         keys: list[str] = list()
         body = ["+"]
 
@@ -143,6 +156,10 @@ class LinkSet:
     async def linksetDataGet(
         self, key: Annotated[str, Field(min_length=1)], pwd: str | None = None
     ) -> LSLResponse:
+        """LSL object likset data get value by key
+
+        returns LSLResponse.data: str
+        """
         if pwd:
             resp = await self.__http.post(f"{self.__url}/linksetdata/read/{key}", pwd)
         else:
@@ -160,6 +177,13 @@ class LinkSet:
         value: Annotated[str, Field(min_length=1)],
         pwd: str | None = None,
     ) -> LSLResponse:
+        """LSL object likset data set value by key
+
+        Arguments:
+        key -   key string
+        value - value string
+        pwd -   optional protection password
+        """
         if pwd:
             resp = await self.__http.post(
                 f"{self.__url}/linksetdata/write/{key}", f"{value}¦{pwd}"
@@ -181,6 +205,12 @@ class LinkSet:
         key: Annotated[str, Field(min_length=1)],
         pwd: str | None = None,
     ) -> LSLResponse:
+        """LSL object likset data delete value by key
+
+        Arguments:
+        key -   key string
+        pwd -   optional protection password
+        """
         resp = await self.__http.post(f"{self.__url}/linksetdata/delete/{key}", pwd)
         num = int(await resp.text())
         self.__log.debug(f"{key}: {num}")
@@ -193,6 +223,13 @@ class LinkSet:
     async def inventoryRead(
         self, bytype: InvetoryType = InvetoryType.ANY
     ) -> LSLResponse:
+        """LSL object inventory get
+
+        Arguments:
+        bytype - optional, filter InvetoryType
+
+        returns LSLResponse.data: Invetory
+        """
         items: list[InvetoryItem] = list()
         body = ["+"]
 
@@ -227,7 +264,14 @@ class LinkSet:
 
     # delete from inventory
     @validate_call
-    async def inventoryDelete(self, items: Annotated[list[str], Field(min_length=1)]):
+    async def inventoryDelete(
+        self, items: Annotated[Sequence[str], Field(min_length=1)]
+    ):
+        """LSL object inventory delete
+
+        Arguments:
+        items - Sequence[str] names
+        """
         for item in items:
             if not re.match(r"^[\x20-\x7b\x7d-\x7e]{1,63}$", item):
                 raise ValueError(f"'{item}' is not valid item name")
@@ -257,6 +301,12 @@ class LinkSet:
         destination: UUID,
         item: Annotated[str, Field(pattern=r"^[\x20-\x7b\x7d-\x7e]{1,63}$")],
     ):
+        """LSL object give item from inventory
+
+        Arguments:
+        destination - UUID avatar or object id
+        item -        string item name
+        """
         if not destination.int:
             raise ValueError("Can't give inventory to NULL_KEY")
         await self.__http.post(f"{self.__url}/inventory/give", f"{destination}¦{item}")
@@ -269,8 +319,14 @@ class LinkSet:
         self,
         destination: UUID,
         folder: Annotated[str, Field(pattern=r"^[\x20-\x7b\x7d-\x7e]{1,63}$")],
-        items: Annotated[list[str], Field(min_length=1, max_length=41)],
+        items: Annotated[Sequence[str], Field(min_length=1, max_length=41)],
     ):
+        """LSL object give items from inventory
+
+        Arguments:
+        destination - UUID avatar or object id
+        item -        string item name
+        """
         for item in items:
             if not re.match(r"^[\x20-\x7b\x7d-\x7e]{1,63}$", item):
                 raise ValueError(f"'{item}' is not valid item name")

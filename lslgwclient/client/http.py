@@ -26,9 +26,9 @@ if not _sslcontext:
     _sslcontext.set_ciphers("ALL:@SECLEVEL=1")
 
 
+# wrap aiohttp.ClientResponse
 class ClientResponse(BaseClientResponse):
     __resp: aiohttp.ClientResponse
-    # headers: dict[str, str]
 
     def __init__(self, resp: aiohttp.ClientResponse) -> None:
         self.__resp = resp
@@ -46,6 +46,7 @@ class ClientResponse(BaseClientResponse):
         return self.__resp.reason
 
 
+# default HTTP implementation, provides by dependency-injector
 class HTTP(BaseHTTP):
     # http get method
     @staticmethod

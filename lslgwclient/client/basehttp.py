@@ -2,15 +2,14 @@
 # fake for unit tests
 
 import abc
-from uuid import uuid4
 from typing_extensions import Annotated
 import aiohttp.web_exceptions as excepts
 from pydantic import validate_call, Field
 
-creatorId = uuid4()
-
 
 class ClientResponse(abc.ABC):
+    """HTTP response representation"""
+
     headers: dict[str, str]
 
     @abc.abstractmethod
@@ -19,28 +18,42 @@ class ClientResponse(abc.ABC):
 
     @abc.abstractmethod
     async def text(self) -> str:
+        """Response body"""
         raise NotImplementedError()
 
     @property
     def status(self) -> int:
+        """Response status code"""
         raise NotImplementedError()
 
     @property
     def reason(self) -> str | None:
+        """Response error reason"""
         raise NotImplementedError()
 
 
 class HTTP:
-    # http get method
+    """HTTP client"""
+
     @staticmethod
     @abc.abstractmethod
     async def get(url: str) -> ClientResponse:
+        """HTTP GET
+
+        Arguments:
+        url - adress with query string
+        """
         raise NotImplementedError()
 
-    # http get method
     @staticmethod
     @abc.abstractmethod
     async def post(url: str, data: str | None) -> ClientResponse:
+        """HTTP POST
+
+        Arguments:
+        url -  adress with query string
+        data - body
+        """
         raise NotImplementedError()
 
     # select exception type by responce.status
@@ -49,6 +62,11 @@ class HTTP:
     async def __exceptionByResp(
         resp=Annotated[ClientResponse, Field()]
     ) -> excepts.HTTPException:
+        """Make aiohttp exception from ClientResponse
+
+        Arguments:
+        resp - ClientResponse
+        """
         code = resp.status
         text = await resp.text()
         if text:
