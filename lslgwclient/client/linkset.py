@@ -245,7 +245,7 @@ class LinkSet:
             text = await resp.text()
             body = text.split("\n")
             for line in body:
-                if line != "+":
+                if line != "+" and len(line):
                     args = line.split("¦")
                     items.append(
                         InvetoryItem(

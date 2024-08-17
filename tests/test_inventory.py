@@ -18,8 +18,13 @@ def test_read_inventory(api, units_test_url):
     ls = api.linkset(units_test_url)
     resp = asyncio.run(ls.inventoryRead())
     assert len(resp.data.items) == 4
+    assert resp.data.filtered == InvetoryType.ANY
     resp = asyncio.run(ls.inventoryRead(InvetoryType.NOTECARD))
     assert len(resp.data.items) == 2
+    assert resp.data.filtered == InvetoryType.NOTECARD
+    resp = asyncio.run(ls.inventoryRead(InvetoryType.SOUND))
+    assert len(resp.data.items) == 0
+    assert resp.data.filtered == InvetoryType.SOUND
 
 
 @pytest.mark.integrationtest

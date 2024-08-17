@@ -98,6 +98,8 @@ class HTTP(BaseHTTP):
             # fake data for call of linksetDataGet method with not exist key
             case url if url.endswith("/linksetdata/read/notexistkey"):
                 return ClientResponse("")
+            case url if "/inventory/read?type=1" in url:
+                return ClientResponse("")
             # fake data for call of inventoryRead method with notecard type
             case url if "/inventory/read?type=7" in url:
                 return ClientResponse(
