@@ -1,4 +1,5 @@
 from dependency_injector.wiring import Provide, inject
+from typing import Any
 
 from .container import Container
 from .linkset import LinkSet
@@ -15,10 +16,16 @@ class API:
         self.container.wire(modules=[__name__])
 
     @inject
-    def linkset(self, url: str, http: HTTP = Provide[Container.http]) -> LinkSet:
+    def linkset(
+        self,
+        url: str,
+        headers: dict[str, Any] = dict(),
+        http: HTTP = Provide[Container.http],
+    ) -> LinkSet:
         """get LinkSet, it provides LSL object iteraction
 
         Arguments:
-        url - link to LSL object
+        url -     link to LSL object
+        headers - optional, add headers for any request
         """
-        return LinkSet(http, url)
+        return LinkSet(http, url, headers)

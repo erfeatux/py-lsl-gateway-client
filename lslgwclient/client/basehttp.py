@@ -2,7 +2,7 @@
 # fake for unit tests
 
 import abc
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Any
 import aiohttp.web_exceptions as excepts
 from pydantic import validate_call, Field
 
@@ -37,7 +37,7 @@ class HTTP:
 
     @staticmethod
     @abc.abstractmethod
-    async def get(url: str) -> ClientResponse:
+    async def get(url: str, headers: dict[str, Any] = dict()) -> ClientResponse:
         """HTTP GET
 
         Arguments:
@@ -47,7 +47,9 @@ class HTTP:
 
     @staticmethod
     @abc.abstractmethod
-    async def post(url: str, data: str | None) -> ClientResponse:
+    async def post(
+        url: str, data: str | None, headers: dict[str, Any] = dict()
+    ) -> ClientResponse:
         """HTTP POST
 
         Arguments:

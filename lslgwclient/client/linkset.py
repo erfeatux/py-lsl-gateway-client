@@ -1,5 +1,5 @@
+from typing_extensions import Annotated, Any
 from pydantic import validate_call, Field
-from typing_extensions import Annotated
 from uuid import UUID, uuid5
 from typing import Sequence
 import re
@@ -30,14 +30,16 @@ class LinkSet:
         + r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
         re.IGNORECASE,
     )
+    __headers: dict[str, Any]
     __http: HTTP
     __url: str
     __id: UUID
 
     # contructor by LSLHttp url
-    def __init__(self, http: HTTP, url: str) -> None:
+    def __init__(self, http: HTTP, url: str, headers: dict[str, Any] = dict()) -> None:
         if not self.__urlPattern.match(url):
             raise ValueError(f"Invalid url: {url}")
+        self.__headers = headers
         self.__url = url.lower()
         self.__http = http
         self.__log.info(url)
@@ -48,7 +50,7 @@ class LinkSet:
 
         returns LSLResponse.data: LinkSetInfo
         """
-        resp = await self.__http.get(f"{self.__url}/info")
+        resp = await self.__http.get(f"{self.__url}/info", headers=self.__headers)
         body = (await resp.text()).split("¦")
         lslresp = LSLResponse(
             resp,
@@ -115,9 +117,13 @@ class LinkSet:
         # load parts while exists
         while body and body[-1] == "+":
             if len(prims):
-                resp = await self.__http.get(f"{self.__url}/prims/{len(prims)+1}")
+                resp = await self.__http.get(
+                    f"{self.__url}/prims/{len(prims)+1}", headers=self.__headers
+                )
             else:
-                resp = await self.__http.get(f"{self.__url}/prims")
+                resp = await self.__http.get(
+                    f"{self.__url}/prims", headers=self.__headers
+                )
             body = (await resp.text()).splitlines()
             for line in body:
                 if line != "+":
@@ -138,10 +144,13 @@ class LinkSet:
         while body[-1] == "+":
             if len(keys):
                 resp = await self.__http.get(
-                    f"{self.__url}/linksetdata/keys/{len(keys)+1}"
+                    f"{self.__url}/linksetdata/keys/{len(keys)+1}",
+                    headers=self.__headers,
                 )
             else:
-                resp = await self.__http.get(f"{self.__url}/linksetdata/keys")
+                resp = await self.__http.get(
+                    f"{self.__url}/linksetdata/keys", headers=self.__headers
+                )
             body = (await resp.text()).split("¦")
             if body[-1] == "+":
                 keys.extend(body[:-1])
@@ -161,9 +170,13 @@ class LinkSet:
         returns LSLResponse.data: str
         """
         if pwd:
-            resp = await self.__http.post(f"{self.__url}/linksetdata/read/{key}", pwd)
+            resp = await self.__http.post(
+                f"{self.__url}/linksetdata/read/{key}", pwd, headers=self.__headers
+            )
         else:
-            resp = await self.__http.get(f"{self.__url}/linksetdata/read/{key}")
+            resp = await self.__http.get(
+                f"{self.__url}/linksetdata/read/{key}", headers=self.__headers
+            )
         if not await resp.text():
             raise linksetDataExceptionByNum(4, key)
         self.__log.debug(f"{key}: {await resp.text()}")
@@ -186,11 +199,13 @@ class LinkSet:
         """
         if pwd:
             resp = await self.__http.post(
-                f"{self.__url}/linksetdata/write/{key}", f"{value}¦{pwd}"
+                f"{self.__url}/linksetdata/write/{key}",
+                f"{value}¦{pwd}",
+                headers=self.__headers,
             )
         else:
             resp = await self.__http.post(
-                f"{self.__url}/linksetdata/write/{key}", value
+                f"{self.__url}/linksetdata/write/{key}", value, headers=self.__headers
             )
         num = int(await resp.text())
         self.__log.debug(f"{key}: {num}")
@@ -211,7 +226,9 @@ class LinkSet:
         key -   key string
         pwd -   optional protection password
         """
-        resp = await self.__http.post(f"{self.__url}/linksetdata/delete/{key}", pwd)
+        resp = await self.__http.post(
+            f"{self.__url}/linksetdata/delete/{key}", pwd, headers=self.__headers
+        )
         num = int(await resp.text())
         self.__log.debug(f"{key}: {num}")
         if num:
@@ -236,11 +253,12 @@ class LinkSet:
         while body[-1] == "+":
             if len(items):
                 resp = await self.__http.get(
-                    f"{self.__url}/inventory/read/{len(items)}?type={bytype}"
+                    f"{self.__url}/inventory/read/{len(items)}?type={bytype}",
+                    headers=self.__headers,
                 )
             else:
                 resp = await self.__http.get(
-                    f"{self.__url}/inventory/read?type={bytype}"
+                    f"{self.__url}/inventory/read?type={bytype}", headers=self.__headers
                 )
             text = await resp.text()
             body = text.split("\n")
@@ -277,7 +295,9 @@ class LinkSet:
                 raise ValueError(f"'{item}' is not valid item name")
 
         async def dosend(body: str) -> None:
-            await self.__http.post(f"{self.__url}/inventory/delete", body)
+            await self.__http.post(
+                f"{self.__url}/inventory/delete", body, headers=self.__headers
+            )
             body = ""
 
         body = ""
@@ -309,7 +329,11 @@ class LinkSet:
         """
         if not destination.int:
             raise ValueError("Can't give inventory to NULL_KEY")
-        await self.__http.post(f"{self.__url}/inventory/give", f"{destination}¦{item}")
+        await self.__http.post(
+            f"{self.__url}/inventory/give",
+            f"{destination}¦{item}",
+            headers=self.__headers,
+        )
 
         self.__log.debug(f"Given to {destination} '{item}' inventory item")
 
@@ -336,6 +360,8 @@ class LinkSet:
         body = f'{destination}¦{folder}¦{"¦".join(items)}'
         if len(body.encode("UTF-8")) > 2048:
             raise ValueError("Too big")
-        await self.__http.post(f"{self.__url}/inventory/givelist", body)
+        await self.__http.post(
+            f"{self.__url}/inventory/givelist", body, headers=self.__headers
+        )
 
         self.__log.debug(f"Given to {destination} '{folder}' inventory items list")
