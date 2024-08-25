@@ -3,6 +3,7 @@
 
 from logging import getLogger
 from uuid import uuid4
+from typing import Any
 
 from lslgwclient.client.basehttp import HTTP as BaseHTTP
 from lslgwclient.client.basehttp import ClientResponse as BaseClientResponse
@@ -56,7 +57,7 @@ class ClientResponse(BaseClientResponse):
 class HTTP(BaseHTTP):
     # http get method
     @staticmethod
-    async def get(url: str) -> ClientResponse:
+    async def get(url: str, headers: dict[str, Any] = dict()) -> ClientResponse:
         log.debug(f"{url=}")
         match url.lower():
             # fake data for info method
@@ -134,7 +135,9 @@ class HTTP(BaseHTTP):
 
     # http get method
     @staticmethod
-    async def post(url: str, data: str | None) -> ClientResponse:
+    async def post(
+        url: str, data: str | None, headers: dict[str, Any] = dict()
+    ) -> ClientResponse:
         log.debug(f"{url=}; {data=}")
         match url.lower():
             # fake data for call of linksetDataGet method with protection pass
